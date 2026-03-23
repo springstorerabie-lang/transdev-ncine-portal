@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portail Transdev</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <div class="header">
+        <div class="title">
+          <img src="/static/assets/logo_transdev.jpg" alt="Logo Transdev" class="logo">
+          <h1 id="appTitle">Assistant Transdev</h1>
+        </div>
+      </div>
+      <div id="announcementBox" class="banner hidden"></div>
+      <div class="content">
+        <p class="small">Saisissez votre NCINE pour afficher uniquement vos propres informations. La réponse sera reformulée de façon plus naturelle si Gemini est configuré.</p>
+        <label for="ncineInput">NCINE</label>
+        <div class="row">
+          <input id="ncineInput" type="text" placeholder="Exemple : 1004" />
+          <button id="lookupBtn" type="button">Afficher mes données</button>
+        </div>
+        <div id="userMessage" class="message hidden"></div>
+        <div id="aiAnswer" class="ai-card hidden"></div>
+        <div id="resultGrid" class="grid" style="margin-top:18px;"></div>
+      </div>
+    </section>
+  </main>
+  <script src="/static/user.js"></script>
+</body>
+</html>

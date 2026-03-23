@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion admin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <div class="header">
+        <div class="title">
+          <img src="/static/assets/logo_transdev.jpg" alt="Logo Transdev" class="logo">
+          <h1>Connexion administrateur</h1>
+        </div>
+      </div>
+      <div class="content">
+        <label for="adminUser">Nom d'utilisateur</label>
+        <input id="adminUser" type="text" placeholder="admin">
+        <label for="adminPass" style="margin-top:14px;">Mot de passe</label>
+        <input id="adminPass" type="password" placeholder="Mot de passe">
+        <div class="top-actions" style="margin-top:16px;">
+          <button id="adminLoginBtn" type="button">Se connecter</button>
+        </div>
+        <div id="adminLoginMessage" class="message hidden"></div>
+      </div>
+    </section>
+  </main>
+  <script src="/static/admin_login.js"></script>
+</body>
+</html>

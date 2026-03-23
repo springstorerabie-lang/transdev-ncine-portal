@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <div class="header">
+        <div class="title">
+          <img src="/static/assets/logo_transdev.jpg" alt="Logo Transdev" class="logo">
+          <h1>Administration Transdev</h1>
+        </div>
+        <div class="top-actions">
+          <button id="refreshBtn" type="button">Actualiser les données</button>
+          <button id="logoutBtn" class="secondary" type="button">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="row">
+          <div>
+            <label for="titleInput">Titre affiché</label>
+            <input id="titleInput" type="text">
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label for="announcementInput">Message / notification</label>
+          <textarea id="announcementInput"></textarea>
+        </div>
+
+        <div class="switch-row">
+          <input id="announcementToggle" type="checkbox">
+          <label for="announcementToggle" style="margin:0; font-weight:600;">
+            Afficher la notification
+          </label>
+        </div>
+
+        <div class="top-actions" style="margin-top:16px;">
+          <button id="saveBtn" type="button">Enregistrer les modifications</button>
+        </div>
+
+        <div id="adminMessage" class="message hidden"></div>
+
+        <div style="margin-top: 24px;">
+          <div class="top-actions">
+            <button id="loadTopAbsencesBtn" type="button">Afficher les plus fortes absences</button>
+          </div>
+          <div id="topAbsencesMessage" class="message hidden"></div>
+          <div class="table-wrap" style="margin-top: 12px;">
+            <table id="topAbsencesTable">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div class="top-actions">
+            <button id="loadAnomaliesBtn" type="button">Afficher les anomalies</button>
+          </div>
+          <div id="anomaliesMessage" class="message hidden"></div>
+          <div class="table-wrap" style="margin-top: 12px;">
+            <table id="anomaliesTable">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <label for="adminAiOutput">Résumé IA administrateur</label>
+
+          <div class="top-actions" style="margin-top: 12px;">
+            <button id="summarizeTopAbsencesBtn" type="button">
+              Résumer les plus fortes absences
+            </button>
+            <button id="summarizeAnomaliesBtn" type="button">
+              Expliquer les anomalies
+            </button>
+          </div>
+
+          <div id="adminAiMessage" class="message hidden"></div>
+
+          <textarea
+            id="adminAiOutput"
+            readonly
+            style="margin-top: 12px; min-height: 140px;"
+            placeholder="Le résumé IA apparaîtra ici..."
+          ></textarea>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 24px;">
+          <table id="usersTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

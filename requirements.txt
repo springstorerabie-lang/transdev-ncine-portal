@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-dotenv
+gspread
+google-auth
+pandas
+openpyxl
+google-genai
+psycopg[binary]
