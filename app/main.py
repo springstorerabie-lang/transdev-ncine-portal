@@ -19,31 +19,33 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "app" / "static"
-DB_PATH = BASE_DIR / "data" / "app.db"
 DEFAULT_EXCEL = BASE_DIR / "data" / "UtilisateursChatbot3.xlsx"
 
-SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me")
-print("Loaded admin password =", repr(ADMIN_PASSWORD))
 SESSION_COOKIE_NAME = "transdev_admin_session"
 
 DATA_SOURCE = os.getenv("DATA_SOURCE", "excel").strip().lower()
 EXCEL_FILE_PATH = os.getenv("EXCEL_FILE_PATH", str(DEFAULT_EXCEL))
 EXCEL_SHEET_NAME = os.getenv("EXCEL_SHEET_NAME", "UtilisateursChatbot")
-GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "secrets/google-service-account.json")
+GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv(
+    "GOOGLE_SERVICE_ACCOUNT_FILE",
+    "secrets/google-service-account.json",
+)
 GOOGLE_SHEETS_SPREADSHEET_ID = os.getenv("GOOGLE_SHEETS_SPREADSHEET_ID", "")
 GOOGLE_SHEETS_WORKSHEET = os.getenv("GOOGLE_SHEETS_WORKSHEET", "UtilisateursChatbot")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 sheet_service = UserDataService(
     data_source=DATA_SOURCE,
     excel_file_path=str(BASE_DIR / EXCEL_FILE_PATH) if not Path(EXCEL_FILE_PATH).is_absolute() else EXCEL_FILE_PATH,
     excel_sheet_name=EXCEL_SHEET_NAME,
-    service_account_file=str(BASE_DIR / GOOGLE_SERVICE_ACCOUNT_FILE) if not Path(GOOGLE_SERVICE_ACCOUNT_FILE).is_absolute() else GOOGLE_SERVICE_ACCOUNT_FILE,
+    service_account_file=str(BASE_DIR / GOOGLE_SERVICE_ACCOUNT_FILE)
+    if not Path(GOOGLE_SERVICE_ACCOUNT_FILE).is_absolute()
+    else GOOGLE_SERVICE_ACCOUNT_FILE,
     spreadsheet_id=GOOGLE_SHEETS_SPREADSHEET_ID,
     worksheet_name=GOOGLE_SHEETS_WORKSHEET,
 )
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 settings_service = SettingsService(DATABASE_URL)
 ai_service = AIService()
 
@@ -74,14 +76,15 @@ class SettingsUpdateRequest(BaseModel):
     announcement_text: str
     announcement_enabled: bool
 
+
 class AdminSummaryRequest(BaseModel):
     summary_type: str
     limit: int = 10
 
+
 def is_admin(request: Request) -> bool:
     token = request.cookies.get(SESSION_COOKIE_NAME)
     return bool(token and token in admin_sessions)
-
 
 
 def require_admin(request: Request) -> None:
@@ -89,10 +92,10 @@ def require_admin(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Accès administrateur requis.")
 
 
-
 @app.get("/")
 def user_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "user.html")
+
 
 @app.get("/api/status")
 def status() -> dict:
@@ -105,10 +108,10 @@ def status() -> dict:
         "gemini_enabled": bool(os.getenv("GEMINI_API_KEY", "")),
     }
 
+
 @app.get("/admin/login")
 def admin_login_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "admin_login.html")
-
 
 
 @app.get("/admin")
@@ -140,12 +143,9 @@ def user_lookup(payload: NcineRequest) -> dict:
     if not row:
         raise HTTPException(status_code=404, detail="Aucune donnée trouvée pour ce NCINE.")
 
-    message = ai_service.rewrite_user_row(ncine, row)
     return {
         "item": row,
-        "message": message,
-        "ai_enabled": ai_service.enabled,
-        "ai_model": ai_service.model if ai_service.enabled else None,
+        "labels": sheet_service.get_column_labels(),
     }
 
 
@@ -211,7 +211,10 @@ def admin_refresh(request: Request) -> dict:
 @app.get("/api/admin/users")
 def admin_users(request: Request) -> dict:
     require_admin(request)
-    return {"items": sheet_service.all_rows()}
+    return {
+        "items": sheet_service.all_rows(),
+        "labels": sheet_service.get_column_labels(),
+    }
 
 @app.get("/api/admin/top-absences")
 def admin_top_absences(request: Request, limit: int = 10) -> dict:
@@ -228,7 +231,6 @@ def admin_top_absences(request: Request, limit: int = 10) -> dict:
     }
 
 
-
 @app.get("/api/admin/anomalies")
 def admin_anomalies(request: Request, limit: int = 100) -> dict:
     require_admin(request)
@@ -239,9 +241,11 @@ def admin_anomalies(request: Request, limit: int = 100) -> dict:
     items = sheet_service.anomalies(limit=limit)
     return {
         "items": items,
+        "labels": sheet_service.get_column_labels(),
         "count": len(items),
         "limit": limit,
     }
+
 
 @app.post("/api/admin/ai-summary")
 def admin_ai_summary(payload: AdminSummaryRequest, request: Request) -> dict:
@@ -253,21 +257,21 @@ def admin_ai_summary(payload: AdminSummaryRequest, request: Request) -> dict:
     if summary_type not in {"top_absences", "anomalies"}:
         raise HTTPException(
             status_code=400,
-            detail="Le type de résumé doit être 'top_absences' ou 'anomalies'."
+            detail="Le type de résumé doit être 'top_absences' ou 'anomalies'.",
         )
 
     if summary_type == "top_absences":
         if limit < 1 or limit > 100:
             raise HTTPException(
                 status_code=400,
-                detail="La limite des absences doit être comprise entre 1 et 100."
+                detail="La limite des absences doit être comprise entre 1 et 100.",
             )
         items = sheet_service.top_absences(limit=limit)
     else:
         if limit < 1 or limit > 500:
             raise HTTPException(
                 status_code=400,
-                detail="La limite des anomalies doit être comprise entre 1 et 500."
+                detail="La limite des anomalies doit être comprise entre 1 et 500.",
             )
         items = sheet_service.anomalies(limit=limit)
 
@@ -282,22 +286,9 @@ def admin_ai_summary(payload: AdminSummaryRequest, request: Request) -> dict:
         "ai_model": ai_service.model if ai_service.enabled else None,
     }
 
+
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     return JSONResponse(status_code=500, content={"detail": f"Erreur serveur inattendue : {exc}"})
-
-@app.get("/api/admin/top-absences")
-def admin_top_absences(request: Request, limit: int = 10) -> dict:
-    require_admin(request)
-
-    if limit < 1 or limit > 100:
-        raise HTTPException(status_code=400, detail="La limite doit être comprise entre 1 et 100.")
-
-    items = sheet_service.top_absences(limit=limit)
-    return {
-        "items": items,
-        "count": len(items),
-        "limit": limit,
-    }

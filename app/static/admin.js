@@ -41,7 +41,15 @@ function showAdminAiMessage(text, isError = false) {
   showBoxMessage(adminAiMessage, text, isError);
 }
 
-function renderTable(tableElement, items) {
+function formatHeader(header, labels = {}) {
+  if (labels[header]) return labels[header];
+
+  return header
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function renderTable(tableElement, items, labels = {}) {
   const thead = tableElement.querySelector('thead');
   const tbody = tableElement.querySelector('tbody');
 
@@ -55,7 +63,7 @@ function renderTable(tableElement, items) {
 
   headers.forEach(header => {
     const th = document.createElement('th');
-    th.textContent = header;
+    th.textContent = formatHeader(header, labels);
     trHead.appendChild(th);
   });
 
@@ -92,7 +100,7 @@ async function loadTopAbsences() {
     }
 
     showTopAbsencesMessage(`Top ${data.count} des collaborateurs avec le plus d'absences.`);
-    renderTable(topAbsencesTable, data.items);
+    renderTable(topAbsencesTable, data.items, data.labels || {});
   } catch (error) {
     showTopAbsencesMessage('Le serveur est indisponible.', true);
   }
@@ -116,7 +124,7 @@ async function loadAnomalies() {
     }
 
     showAnomaliesMessage(`${data.count} ligne(s) nécessitent une vérification.`);
-    renderTable(anomaliesTable, data.items);
+    renderTable(anomaliesTable, data.items, data.labels || {});
   } catch (error) {
     showAnomaliesMessage('Le serveur est indisponible.', true);
   }
@@ -169,7 +177,7 @@ async function loadAdmin() {
 
   const usersRes = await fetch('/api/admin/users');
   const users = await usersRes.json();
-  renderTable(usersTable, users.items || []);
+  renderTable(usersTable, users.items || [], users.labels || {});
 
   await loadTopAbsences();
 }

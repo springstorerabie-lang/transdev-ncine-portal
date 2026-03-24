@@ -39,3 +39,27 @@ th { background:#faf3f3; }
 .small { color:#666; font-size:.92rem; }
 
 .ai-card { margin-top: 16px; padding: 16px 18px; border-radius: 12px; background: #faf3f3; border:1px solid var(--border); line-height: 1.6; }
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.result-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+}
+
+.result-label {
+  display: block;
+  color: var(--red);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.result-value {
+  line-height: 1.5;
+  word-break: break-word;
+}

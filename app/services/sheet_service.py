@@ -33,6 +33,7 @@ class UserDataService:
         self.cache_seconds = cache_seconds
         self._cached_df: pd.DataFrame | None = None
         self._cached_at: float = 0.0
+        self._column_labels: dict[str, str] = {}
 
     def _get_gspread_client(self):
         service_account_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
@@ -69,7 +70,15 @@ class UserDataService:
         if df.empty:
             raise ValueError("La source de données est vide.")
 
-        df.columns = [self._normalize_column(col) for col in df.columns]
+        original_columns = [str(col).strip() for col in df.columns]
+        normalized_columns = [self._normalize_column(col) for col in original_columns]
+
+        self._column_labels = {
+            norm: original
+            for norm, original in zip(normalized_columns, original_columns)
+        }
+
+        df.columns = normalized_columns
         df = df.fillna("")
 
         for col in list(df.columns):
@@ -115,6 +124,10 @@ class UserDataService:
 
     def refresh(self) -> None:
         self.load(force=True)
+
+    def get_column_labels(self) -> dict[str, str]:
+        self.load()
+        return dict(self._column_labels)
 
     def find_user_by_ncine(self, ncine: str) -> dict[str, Any] | None:
         df = self.load()
