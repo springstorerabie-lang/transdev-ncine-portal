@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 import re
 import time
 import unicodedata
@@ -32,6 +34,21 @@ class UserDataService:
         self._cached_df: pd.DataFrame | None = None
         self._cached_at: float = 0.0
 
+    def _get_gspread_client(self):
+        service_account_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+
+        if service_account_json:
+            creds_dict = json.loads(service_account_json)
+            return gspread.service_account_from_dict(creds_dict)
+
+        service_account_path = Path(self.service_account_file)
+        if not service_account_path.exists():
+            raise FileNotFoundError(
+                f"Fichier de compte de service introuvable : {service_account_path}"
+            )
+
+        return gspread.service_account(filename=str(service_account_path))
+
     def _strip_accents(self, value: str) -> str:
         return "".join(
             char for char in unicodedata.normalize("NFKD", value)
@@ -62,15 +79,10 @@ class UserDataService:
         return df
 
     def _load_google_sheets(self) -> pd.DataFrame:
-        service_account_path = Path(self.service_account_file)
-        if not service_account_path.exists():
-            raise FileNotFoundError(
-                f"Fichier de compte de service introuvable : {service_account_path}"
-            )
         if not self.spreadsheet_id:
             raise ValueError("GOOGLE_SHEETS_SPREADSHEET_ID est vide.")
 
-        gc = gspread.service_account(filename=str(service_account_path))
+        gc = self._get_gspread_client()
         spreadsheet = gc.open_by_key(self.spreadsheet_id)
         worksheet = spreadsheet.worksheet(self.worksheet_name)
         rows = worksheet.get_all_records()
