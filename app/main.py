@@ -20,10 +20,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "app" / "static"
 DEFAULT_EXCEL = BASE_DIR / "data" / "UtilisateursChatbot3.xlsx"
-LOCAL_SETTINGS_DB = BASE_DIR / "data" / "app_settings.sqlite3"
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Tr@n$dev2026")
 SESSION_COOKIE_NAME = "transdev_admin_session"
 
 DATA_SOURCE = os.getenv("DATA_SOURCE", "excel").strip().lower()
@@ -47,7 +46,7 @@ sheet_service = UserDataService(
     spreadsheet_id=GOOGLE_SHEETS_SPREADSHEET_ID,
     worksheet_name=GOOGLE_SHEETS_WORKSHEET,
 )
-settings_service = SettingsService(DATABASE_URL, sqlite_fallback_path=str(LOCAL_SETTINGS_DB))
+settings_service = SettingsService(DATABASE_URL)
 ai_service = AIService()
 
 app = FastAPI(title="Portail Transdev Gemini", version="3.0.1")
