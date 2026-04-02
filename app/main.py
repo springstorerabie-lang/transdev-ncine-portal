@@ -20,6 +20,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "app" / "static"
 DEFAULT_EXCEL = BASE_DIR / "data" / "UtilisateursChatbot3.xlsx"
+LOCAL_SETTINGS_DB = BASE_DIR / "data" / "app_settings.sqlite3"
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me")
@@ -46,10 +47,10 @@ sheet_service = UserDataService(
     spreadsheet_id=GOOGLE_SHEETS_SPREADSHEET_ID,
     worksheet_name=GOOGLE_SHEETS_WORKSHEET,
 )
-settings_service = SettingsService(DATABASE_URL)
+settings_service = SettingsService(DATABASE_URL, sqlite_fallback_path=str(LOCAL_SETTINGS_DB))
 ai_service = AIService()
 
-app = FastAPI(title="Portail Transdev Gemini", version="3.0.0")
+app = FastAPI(title="Portail Transdev Gemini", version="3.0.1")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -92,6 +93,31 @@ def require_admin(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Accès administrateur requis.")
 
 
+def get_first_non_empty(item: dict, *keys: str) -> str:
+    for key in keys:
+        value = str(item.get(key, "")).strip()
+        if value:
+            return value
+    return ""
+
+
+def build_user_message(item: dict) -> str:
+    name = get_first_non_empty(item, "nom_prenom", "nom", "name")
+    last_update = get_first_non_empty(
+        item,
+        "mise_a_jour",
+        "last_updated",
+        "derniere_mise_a_jour",
+        "date_mise_a_jour",
+        "updated_at",
+    )
+
+    first_line = f"Bonjour {name}" if name else "Bonjour"
+    second_line = f"Dernière mise à jour : {last_update or 'Non disponible'}"
+
+    return f"{first_line}\n{second_line}"
+
+
 @app.get("/")
 def user_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "user.html")
@@ -101,11 +127,12 @@ def user_page() -> FileResponse:
 def status() -> dict:
     return {
         "app_name": "Assistant Transdev",
-        "data_source": os.getenv("DATA_SOURCE", "excel"),
-        "worksheet": os.getenv("GOOGLE_SHEETS_WORKSHEET", ""),
-        "spreadsheet_id_configured": bool(os.getenv("GOOGLE_SHEETS_SPREADSHEET_ID", "")),
-        "excel_path": os.getenv("EXCEL_FILE_PATH", ""),
+        "data_source": DATA_SOURCE,
+        "worksheet": GOOGLE_SHEETS_WORKSHEET,
+        "spreadsheet_id_configured": bool(GOOGLE_SHEETS_SPREADSHEET_ID),
+        "excel_path": EXCEL_FILE_PATH,
         "gemini_enabled": bool(os.getenv("GEMINI_API_KEY", "")),
+        "settings_backend": settings_service.backend,
     }
 
 
@@ -146,6 +173,7 @@ def user_lookup(payload: NcineRequest) -> dict:
     return {
         "item": row,
         "labels": sheet_service.get_column_labels(),
+        "message": build_user_message(row),
     }
 
 
@@ -215,6 +243,7 @@ def admin_users(request: Request) -> dict:
         "items": sheet_service.all_rows(),
         "labels": sheet_service.get_column_labels(),
     }
+
 
 @app.get("/api/admin/top-absences")
 def admin_top_absences(request: Request, limit: int = 10) -> dict:
@@ -292,3 +321,11 @@ async def generic_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     return JSONResponse(status_code=500, content={"detail": f"Erreur serveur inattendue : {exc}"})
+
+
+@app.get("/api/debug/storage")
+def debug_storage() -> dict:
+    return {
+        "settings_backend": getattr(settings_service, "backend", "unknown"),
+        "database_url_configured": bool(DATABASE_URL),
+    }

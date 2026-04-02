@@ -112,7 +112,7 @@ lookupBtn.addEventListener('click', async () => {
     localStorage.setItem('transdev_ncine', ncine);
     showMessage('Vos informations ont été chargées.');
 
-    renderNaturalAnswer(buildNaturalAnswer(data.item || {}));
+    renderNaturalAnswer(data.message || buildNaturalAnswer(data.item || {}));
     renderFields(data.item || {}, data.labels || {});
   } catch (error) {
     showMessage('Le serveur est indisponible pour le moment.', true);
